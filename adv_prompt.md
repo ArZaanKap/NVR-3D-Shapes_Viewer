@@ -1,0 +1,399 @@
+# 3D Shape Viewer - Detailed Specification
+## 11+ Nonverbal Reasoning Exam Preparation Tool
+
+---
+
+## 1. Project Overview
+
+A responsive web application designed to help students prepare for the nonverbal reasoning section of the UK's 11+ exam. The tool allows users to visualise, construct, and manipulate 3D compound shapes by combining basic building blocks.
+
+- **Target Users:** Students (ages 9-11) preparing for 11+ exams
+- **Platform:** Cross-device (Desktop, Laptop, Tablet, Mobile)
+
+---
+
+## 2. Responsive Design Requirements
+
+The application must function seamlessly across:
+
+| Device | Minimum Resolution |
+|--------|-------------------|
+| Desktop PCs | 1920x1080 and above |
+| Laptops | 1366x768 and above |
+| iPads / Tablets | 768x1024 (both orientations) |
+| Mobile phones | 360x640 and above (both orientations) |
+
+### Implementation Notes:
+- Use CSS media queries for breakpoint-based layouts
+- Touch-friendly controls for mobile/tablet (minimum touch target: 44x44px)
+- Shapes panel should collapse to a drawer/bottom sheet on mobile
+- 3D viewport should maximise available screen space
+- All controls must remain accessible regardless of screen size
+
+---
+
+## 3. User Interface Layout
+
+The UI should be minimal and distraction-free.
+
+### Desktop Layout:
+```
++-------------------------------------------------------------------------+
+|                         SHAPE BUILDER                                   |  <- Title Bar
++-------------------------------------------------------------------------+
+|  [Cursor] [Rotate] [Translate] [Delete] [Reset]  |  Hi, {nickname}!     |  <- Toolbar
++-------------------------------------------------------------------------+
+|                                                  |                      |
+|                                                  |  +----------------+  |
+|                                                  |  |   ViewCube     |  |
+|                                                  |  +----------------+  |
+|                                                  |                      |
+|              3D VIEWPORT                         |                      |
+|              (Main Canvas)                       |                      |
+|                                                  |                      |
+|     [XYZ Axis at Origin]                         |                      |
+|                                                  |                      |
+|                                                  |                      |
++--------------------------------------------------+----------------------+
+|                                                                         |
+|   SHAPES PANEL (3D Thumbnails)                                          |
+|   +-------+ +-------+ +-------+ +-------+ +-------+ +-------+ +-------+ |
+|   | 1x1x1 | | 1x1x2 | | 1x1x3 | | L-Sht | | L-Lng | | T-Sht | | T-Lng | |
+|   +-------+ +-------+ +-------+ +-------+ +-------+ +-------+ +-------+ |
++-------------------------------------------------------------------------+
+```
+
+### Mobile Layout (Stacked):
+- Title at top
+- Toolbar below title
+- ViewCube overlaid on viewport (top-right)
+- 3D Viewport (full width)
+- Shapes Panel as collapsible bottom drawer
+
+---
+
+## 4. Authentication & User Management
+
+### 4.1 Gmail/Google Login
+- Implement Google OAuth 2.0 authentication
+- "Sign in with Google" button on landing/welcome screen
+- Store user data securely (Firebase Authentication recommended)
+
+### 4.2 Nickname System
+- After first login, prompt user **ONCE**: "What's your nickname?"
+- Display input field with friendly messaging for children
+- Store nickname in database linked to Google account
+- **Never ask again** after initial setup
+- Display greeting: `Hi, {nickname}!` in toolbar
+
+### 4.3 User Data Storage
+| Field | Description |
+|-------|-------------|
+| Google UID | Unique identifier |
+| Email | User's Gmail address |
+| Nickname | User-chosen display name |
+| First Login Date | Account creation timestamp |
+| Last Login Date | Most recent login |
+
+*Future consideration: saved shape configurations*
+
+---
+
+## 5. 3D Viewport & Camera System
+
+### 5.1 Viewport Specifications
+- **Default background:** Light grey (`#F5F5F5`) or subtle gradient
+- **Grid floor:** Visible grid plane (subtle lines, 10x10 or 20x20 units)
+- **Camera:** Perspective with sensible default FOV (45-60 degrees)
+
+### 5.2 Camera Controls
+
+#### A) View Buttons (Kid-Friendly Design)
+- Simple button-based camera controls (not a 3D cube)
+- **Buttons:** Default (perspective), Front, Back, Left, Right, Top, Bottom
+- Click button → smooth animated camera transition to that view
+- **Seamless Orbit:** After selecting any view, users can continue to orbit/pan/zoom from that position without interruption (like CAD software)
+- **Visual style:** Touch-friendly buttons (44x44px minimum), clear labels
+- **Positioning:** Right side on desktop, bottom on mobile
+
+#### B) Orbit Controls (Mouse/Touch Drag)
+- Left-click + drag on viewport: Orbit camera around centre
+- Touch + drag: Same orbit behaviour
+- Smooth, intuitive rotation
+
+#### C) Zoom Controls
+- Mouse scroll wheel: Zoom in/out
+- Pinch gesture on touch devices: Zoom in/out
+- Zoom limits: Prevent zooming too far in or out
+
+#### D) Pan Controls (Optional but recommended)
+- Middle-click + drag OR two-finger drag: Pan camera
+
+### 5.3 Origin Axis Indicator
+- Small XYZ axis gizmo at world origin (0,0,0)
+- **Colours:** X=Red, Y=Green, Z=Blue (standard convention)
+- **Size:** Small, non-intrusive (approximately 1 unit length)
+- Always visible but doesn't interfere with shapes
+
+---
+
+## 6. Shape Library
+
+All shapes built from 1x1x1 unit cubes. Dimensions in grid units (L×W×H).
+
+### 6.1 Basic Cuboids
+
+| Shape Name | Dimensions | Description |
+|------------|------------|-------------|
+| Cube | 1 × 1 × 1 | Single unit cube |
+| Short Cuboid | 1 × 1 × 2 | 2 cubes tall |
+| Long Cuboid | 1 × 1 × 3 | 3 cubes tall |
+
+### 6.2 L-Shapes (Viewed from above, like letter "L")
+
+**L-Shape Short** - 2 cubes on base + 1 cube perpendicular
+```
+    [X]
+    [X][X]
+```
+
+**L-Shape Long** - 3 cubes on base + 1 cube perpendicular
+```
+    [X]
+    [X]
+    [X][X]
+```
+
+### 6.3 T-Shapes (Viewed from above, like letter "T")
+
+**T-Shape Short** - 3 cubes across + 1 cube perpendicular
+```
+       [X]
+    [X][X][X]
+```
+
+**T-Shape Long** - 3 cubes across + 2 cubes perpendicular
+```
+       [X]
+       [X]
+    [X][X][X]
+```
+
+### 6.4 Shapes Panel Display
+- Each shape shown as interactive **3D thumbnail**
+- Thumbnails should slowly rotate or respond to hover
+- Shape name displayed below each thumbnail
+- Consistent visual style with main viewport (outlines, colours)
+
+---
+
+## 7. Drag & Drop System
+
+### 7.1 Initiating Drag
+- Click and hold (or touch and hold) on shape thumbnail
+- Shape "lifts" from panel with visual feedback
+- Cursor changes to indicate drag mode
+
+### 7.2 During Drag (Preview System)
+- Ghost/preview version of shape follows cursor
+- Preview is semi-transparent (50-70% opacity)
+- When hovering over the world:
+  - **If no shapes exist:** preview snaps to grid at ground level
+  - **If shapes exist:** detect nearest valid attachment face
+
+### 7.3 Face Detection & Highlighting
+
+| State | Colour |
+|-------|--------|
+| Original/Normal face | Grey `#9CA3AF` |
+| Highlighted/Active face | Blue `#3B82F6` or Green `#22C55E` |
+
+- When dragging near existing shapes:
+  - Detect which face the cursor is nearest to
+  - Highlight that face with colour
+  - Show preview of new shape attached to that face
+
+### 7.4 Snapping Behaviour
+- All shapes snap to world grid (1-unit increments)
+- When attaching to existing shape, snap face-to-face perfectly
+- No floating-point positioning errors (enforce integer coordinates)
+
+### 7.5 Placing Shape
+- Release click/touch to place shape
+- Shape solidifies in position with animation
+- Preview disappears
+- Undo possible via delete function
+
+---
+
+## 8. Selection & Manipulation Tools
+
+### 8.1 Toolbar Buttons (Left to Right)
+
+| Button | Function |
+|--------|----------|
+| **Cursor** | Default mode. Deselects current selection. Click on shapes to select them. Orbit/zoom camera freely. |
+| **Rotate** | Activates rotation mode for selected shape. Shows rotation gimbal/handles. |
+| **Translate** | Activates translation mode for selected shape. Shows translation gimbal/handles. |
+| **Delete** | Deletes currently selected shape. Greyed out if nothing is selected. |
+| **Reset** | Clears ALL shapes from the world. Confirm dialog: "Remove all shapes? This cannot be undone." |
+
+### 8.2 Selection System
+- Click on shape to select it
+- Selected shape gets visual highlight (bright outline or glow)
+- Only one shape can be selected at a time
+- Click on empty space or press Cursor button to deselect
+
+### 8.3 Rotation Tool (Child-Friendly Design)
+
+> **IMPORTANT:** 90-degree increments ONLY (0°, 90°, 180°, 270°)
+
+**Gimbal/Handle Appearance (Fusion 360 style):**
+- Three circular handles (X, Y, Z axes)
+- Colours: X=Red, Y=Green, Z=Blue
+
+**Child-Friendly UI Enhancements:**
+- Large, easy-to-click rotation handles
+- Visual arrows showing rotation direction
+- Optional simple button controls:
+  ```
+  +------+------+
+  |  +90 | -90  |  <- For each axis
+  +------+------+
+  ```
+- Snap animation when rotating (satisfying feedback)
+- Consider large arc buttons around selected shape
+
+### 8.4 Translation Tool
+- Fusion 360-style gimbal with three axes
+- Arrows pointing along X, Y, Z directions
+- Drag arrow to move shape along that axis
+- Movement snaps to grid (1-unit increments)
+- Collision detection: prevent overlapping shapes
+- Colours: X=Red, Y=Green, Z=Blue
+
+---
+
+## 9. Visual Style & Rendering
+
+### 9.1 Shape Appearance
+- **Base colour:** Light grey (`#D1D5DB`) or white (`#FFFFFF`)
+- **Shading:** Matte/flat (not glossy)
+- Subtle ambient occlusion for depth (optional)
+
+### 9.2 Edge Outlines (CRITICAL REQUIREMENT)
+
+> **Every edge of every shape must have a BOLD BLACK outline**
+
+- **Outline thickness:** 2-3 pixels (adjust for visibility)
+- **Purpose:** Clearly distinguish individual blocks in compound shapes
+- **Implementation:** Use outline/edge detection shader or geometry-based lines
+
+### 9.3 Face Highlighting (During Drag)
+| State | Colour |
+|-------|--------|
+| Normal face | Grey `#9CA3AF` |
+| Highlighted/active face | Blue `#3B82F6` or Green `#22C55E` |
+
+- Smooth transition when highlighting changes
+
+---
+
+## 10. Grid & World Space
+
+### 10.1 World Grid
+- Visible grid on ground plane (XZ plane at Y=0)
+- **Grid spacing:** 1 unit (matches shape dimensions)
+- **Grid extent:** 20×20 units (adjustable)
+- **Grid colour:** Light grey lines, subtle
+
+### 10.2 Snapping
+- All shapes snap to grid intersections
+- Snapping is automatic and cannot be disabled
+- Prevents awkward floating-point positions
+
+---
+
+## 11. Technical Implementation Recommendations
+
+### 11.1 Frontend Framework
+- React.js or Vue.js for UI components
+- Three.js for 3D rendering
+- `@react-three/fiber` if using React (recommended)
+- `@react-three/drei` for helpers (OrbitControls, etc.)
+
+### 11.2 Authentication
+- Firebase Authentication (Google provider)
+- Firebase Firestore for user data storage
+
+### 11.3 Styling
+- Tailwind CSS for responsive design
+- CSS modules or styled-components for component-specific styles
+
+### 11.4 State Management
+- React Context or Zustand for app state
+- Track: shapes in world, selected shape, current tool, camera position
+
+### 11.5 Key Libraries
+| Library | Purpose |
+|---------|---------|
+| `three.js` | 3D rendering engine |
+| `@react-three/fiber` | React renderer for Three.js |
+| `@react-three/drei` | Useful Three.js helpers |
+| `firebase` | Authentication and database |
+| `react-dnd` or custom | Drag and drop handling |
+
+---
+
+## 12. Interaction Summary
+
+| Action | Result |
+|--------|--------|
+| Drag shape from panel | Preview follows cursor, highlights target faces |
+| Drop shape | Shape placed, snaps to grid/attached face |
+| Click shape | Selects shape (shows highlight) |
+| Click Cursor button | Deselects, returns to view mode |
+| Click Rotate button | Shows rotation gimbal on selected shape |
+| Rotate via gimbal | Rotates shape 90° in chosen direction |
+| Click Translate button | Shows translation gimbal on selected shape |
+| Translate via gimbal | Moves shape along axis, snaps to grid |
+| Click Delete button | Removes selected shape from world |
+| Click Reset button | Clears all shapes (with confirmation) |
+| Drag on viewport | Orbits camera around centre |
+| Scroll / Pinch | Zooms camera in/out |
+| Click ViewCube face | Snaps camera to that orthographic view |
+
+---
+
+## 13. Accessibility & UX Considerations
+
+- Large, clearly labelled buttons (icons + text where possible)
+- High contrast colours for important UI elements
+- Touch targets minimum 44×44px for mobile
+- Tooltips on hover for toolbar buttons
+- Loading states for any async operations
+- Error handling with friendly messages
+
+### Keyboard Shortcuts (Optional Enhancement)
+| Key | Action |
+|-----|--------|
+| `ESC` | Deselect / Cancel |
+| `DEL` | Delete selected |
+| `R` | Rotate mode |
+| `T` | Translate mode |
+
+---
+
+## 14. Future Enhancements (Out of Scope for V1)
+
+- Save/load shape configurations
+- Share configurations via link
+- Undo/redo functionality
+- Multiple shape colours
+- More shape types (pyramids, cylinders, etc.)
+- Tutorial/onboarding for first-time users
+- Practice questions with answer checking
+
+---
+
+*End of Specification*
