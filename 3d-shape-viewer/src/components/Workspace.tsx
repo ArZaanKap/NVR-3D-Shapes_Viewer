@@ -38,6 +38,7 @@ const CameraController = () => {
   const cameraView = useSceneStore((state) => state.cameraView);
   const setCameraView = useSceneStore((state) => state.setCameraView);
   const isDragging = useSceneStore((state) => state.isDragging);
+  const setCamera = useSceneStore((state) => state.setCamera);
   const prevView = useRef<CameraView | null>(null);
 
   // Animation state
@@ -93,6 +94,7 @@ const CameraController = () => {
       perspectiveCamera.lookAt(targetLookAt.current);
       perspectiveCamera.updateProjectionMatrix();
       set({ camera: perspectiveCamera });
+      setCamera(perspectiveCamera);
 
       if (controlsRef.current) {
         controlsRef.current.target.copy(targetLookAt.current);
@@ -102,7 +104,7 @@ const CameraController = () => {
     }
 
     prevView.current = cameraView;
-  }, [cameraView, perspectiveCamera, set]);
+  }, [cameraView, perspectiveCamera, set, setCamera]);
 
   // Smooth camera animation using useFrame
   useFrame((_, delta) => {
@@ -350,34 +352,45 @@ export const Workspace = () => {
     e.preventDefault();
     e.dataTransfer.dropEffect = 'copy';
 
-    if (canvasRef.current && draggedType) {
+    const camera = useSceneStore.getState().camera;
+    if (canvasRef.current && draggedType && camera) {
       const rect = canvasRef.current.getBoundingClientRect();
-      const x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      const y = ((e.clientY - rect.top) / rect.height) * 2 - 1;
-
-      // Get shape's center offset to calculate correct snap position
-      // Odd dimensions need half-integer positions, even dimensions need integer positions
-      const offset = getShapeCenterOffset(draggedType);
-      const rawX = x * 5;
-      const rawY = -y * 5; // Negate Y for correct screen mapping
-      // Snap so that (position + offset) lands on integer → corners on grid intersections
-      const worldX = Math.round(rawX + offset.x) - offset.x;
-      const worldY = Math.round(rawY + offset.y) - offset.y;
-
-      // Get the correct Z position so shape sits ON the grid (Z-up)
-      const groundZ = getGroundY(draggedType, new THREE.Euler(0, 0, 0)); // Will rename to getGroundZ
-      const newPosition = new THREE.Vector3(worldX, worldY, groundZ);
-
-      setPreviewPosition(newPosition);
-
-      // Check for collision
-      const collision = checkCollision(
-        draggedType,
-        newPosition,
-        new THREE.Euler(0, 0, 0),
-        objects
+      // Convert screen coordinates to NDC (Normalized Device Coordinates)
+      const mouse = new THREE.Vector2(
+        ((e.clientX - rect.left) / rect.width) * 2 - 1,
+        -((e.clientY - rect.top) / rect.height) * 2 + 1
       );
-      setHasCollision(collision);
+
+      // Use raycasting to convert screen position to world coordinates
+      const raycaster = new THREE.Raycaster();
+      raycaster.setFromCamera(mouse, camera);
+
+      // Intersect with ground plane (Z=0 in Z-up coordinate system)
+      const groundPlane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+      const intersect = new THREE.Vector3();
+
+      if (raycaster.ray.intersectPlane(groundPlane, intersect)) {
+        // Get shape's center offset to calculate correct snap position
+        const offset = getShapeCenterOffset(draggedType);
+        // Snap so that (position + offset) lands on integer → corners on grid intersections
+        const worldX = Math.round(intersect.x + offset.x) - offset.x;
+        const worldY = Math.round(intersect.y + offset.y) - offset.y;
+
+        // Get the correct Z position so shape sits ON the grid (Z-up)
+        const groundZ = getGroundY(draggedType, new THREE.Euler(0, 0, 0));
+        const newPosition = new THREE.Vector3(worldX, worldY, groundZ);
+
+        setPreviewPosition(newPosition);
+
+        // Check for collision
+        const collision = checkCollision(
+          draggedType,
+          newPosition,
+          new THREE.Euler(0, 0, 0),
+          objects
+        );
+        setHasCollision(collision);
+      }
     }
   };
 

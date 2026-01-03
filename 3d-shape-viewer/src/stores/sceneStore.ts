@@ -21,6 +21,7 @@ interface SceneState {
   cameraView: CameraView;
   isDragging: boolean;
   rotationPreview: RotationPreview | null;
+  camera: THREE.Camera | null;
 
   // Actions
   addObject: (type: ShapeType, position: THREE.Vector3) => string;
@@ -35,6 +36,7 @@ interface SceneState {
   setCameraView: (view: CameraView) => void;
   setIsDragging: (dragging: boolean) => void;
   clearRotationPreview: () => void;
+  setCamera: (camera: THREE.Camera | null) => void;
 }
 
 export const useSceneStore = create<SceneState>((set, get) => ({
@@ -45,6 +47,7 @@ export const useSceneStore = create<SceneState>((set, get) => ({
   cameraView: 'perspective',
   isDragging: false,
   rotationPreview: null,
+  camera: null,
 
   addObject: (type, position) => {
     const id = crypto.randomUUID();
@@ -179,5 +182,9 @@ export const useSceneStore = create<SceneState>((set, get) => ({
 
   clearRotationPreview: () => {
     set({ rotationPreview: null });
+  },
+
+  setCamera: (camera) => {
+    set({ camera });
   },
 }));
