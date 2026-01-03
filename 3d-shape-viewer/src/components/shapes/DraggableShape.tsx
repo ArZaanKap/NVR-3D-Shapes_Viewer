@@ -7,7 +7,7 @@ import { useSceneStore } from '../../stores/sceneStore';
 import { BaseShape } from './BaseShape';
 import { TranslationGizmo, RotationGizmo } from '../gizmos/ShapeGizmo';
 import { checkCollision, getGroundY } from '../../utils/collision';
-import { getShapeCenterOffset } from '../../utils/geometryBuilder';
+import { getRotatedShapeCenterOffset } from '../../utils/geometryBuilder';
 import type { SceneObject } from '../../types/shapes';
 
 interface DraggableShapeProps {
@@ -64,8 +64,8 @@ export const DraggableShape = ({ object, isSelected }: DraggableShapeProps) => {
       raycaster.ray.intersectPlane(plane, intersect);
 
       if (intersect) {
-        // Use offset-aware snapping (consistent with Workspace.tsx and ShapeGizmo.tsx)
-        const offset = getShapeCenterOffset(object.type);
+        // Use rotation-aware offset snapping for proper grid alignment after rotation
+        const offset = getRotatedShapeCenterOffset(object.type, object.rotation);
         const newX = Math.round(intersect.x + offset.x) - offset.x;
         const newY = Math.round(intersect.y + offset.y) - offset.y;
 

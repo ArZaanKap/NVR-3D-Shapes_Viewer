@@ -6,7 +6,7 @@ import { Html } from '@react-three/drei';
 import { useSceneStore } from '../../stores/sceneStore';
 import { checkCollision, getGroundY } from '../../utils/collision';
 import { ROTATION_INCREMENT } from '../../utils/constants';
-import { getShapeDimensions, getShapeCenterOffset } from '../../utils/geometryBuilder';
+import { getShapeDimensions, getRotatedShapeCenterOffset } from '../../utils/geometryBuilder';
 import { BaseShape } from '../shapes/BaseShape';
 import type { SceneObject } from '../../types/shapes';
 
@@ -102,9 +102,9 @@ const AxisArrow = ({
       const baseSensitivity = 0.015;
       const delta = dotProduct * baseSensitivity;
 
-      // Calculate new position with snapping based on shape's center offset
-      // Odd dimensions need half-integer positions, even dimensions need integer positions
-      const offset = getShapeCenterOffset(currentObject.type);
+      // Calculate new position with rotation-aware snapping
+      // Uses the rotated bounding box to determine correct grid alignment
+      const offset = getRotatedShapeCenterOffset(currentObject.type, currentObject.rotation);
       const axisOffset = axis === 'x' ? offset.x : axis === 'y' ? offset.y : offset.z;
       const newValue = Math.round(startValue.current + delta + axisOffset) - axisOffset;
       const newPos = currentObject.position.clone();

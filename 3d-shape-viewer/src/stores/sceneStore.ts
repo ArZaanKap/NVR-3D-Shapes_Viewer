@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import * as THREE from 'three';
 import type { SceneObject, ShapeType, ToolType } from '../types/shapes';
 import { getGroundY, checkCollision } from '../utils/collision';
-import { getShapeDimensions } from '../utils/geometryBuilder';
+import { getShapeDimensions, getRotatedShapeCenterOffset } from '../utils/geometryBuilder';
 
 export type CameraView = 'perspective' | 'front' | 'back' | 'left' | 'right' | 'top' | 'bottom';
 
@@ -143,11 +143,12 @@ export const useSceneStore = create<SceneState>((set, get) => ({
     posRelativeToPivot.applyQuaternion(incrementQuat);
     const newPosition = pivot.clone().add(posRelativeToPivot);
 
-    // Snap X and Y to grid, but only constrain Z to not go below ground
-    newPosition.x = Math.round(newPosition.x * 2) / 2;
-    newPosition.y = Math.round(newPosition.y * 2) / 2;
+    // Snap to grid using rotation-aware offset (ensures proper alignment for all shape dimensions)
+    const offset = getRotatedShapeCenterOffset(obj.type, newRotation);
+    newPosition.x = Math.round(newPosition.x + offset.x) - offset.x;
+    newPosition.y = Math.round(newPosition.y + offset.y) - offset.y;
     const groundZ = getGroundY(obj.type, newRotation);
-    newPosition.z = Math.max(groundZ, Math.round(newPosition.z * 2) / 2);
+    newPosition.z = Math.max(groundZ, Math.round(newPosition.z + offset.z) - offset.z);
 
     // Check for collision before applying rotation
     if (checkCollision(obj.type, newPosition, newRotation, objects, obj.id)) {

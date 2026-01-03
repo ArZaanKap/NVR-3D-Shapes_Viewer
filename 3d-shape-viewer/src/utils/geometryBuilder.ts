@@ -111,6 +111,53 @@ export function getShapeCenterOffset(shapeType: ShapeType): THREE.Vector3 {
 }
 
 /**
+ * Gets the center offset for a shape after rotation is applied.
+ * This accounts for how rotation changes the bounding box and thus the required grid alignment.
+ */
+export function getRotatedShapeCenterOffset(shapeType: ShapeType, rotation: THREE.Euler): THREE.Vector3 {
+  const definition = SHAPE_DEFINITIONS.find((d) => d.type === shapeType);
+  if (!definition) {
+    return new THREE.Vector3(0, 0, 0);
+  }
+
+  const rotMatrix = new THREE.Matrix4().makeRotationFromEuler(rotation);
+
+  let minX = Infinity, maxX = -Infinity;
+  let minY = Infinity, maxY = -Infinity;
+  let minZ = Infinity, maxZ = -Infinity;
+
+  for (const block of definition.blocks) {
+    // Transform block position by rotation
+    const vec = new THREE.Vector3(block.x, block.y, block.z);
+    vec.applyMatrix4(rotMatrix);
+
+    // Block extends 1 unit in each direction from the transformed position
+    // We need to check all 8 corners of the rotated unit cube
+    for (let dx = 0; dx <= 1; dx++) {
+      for (let dy = 0; dy <= 1; dy++) {
+        for (let dz = 0; dz <= 1; dz++) {
+          const corner = new THREE.Vector3(block.x + dx, block.y + dy, block.z + dz);
+          corner.applyMatrix4(rotMatrix);
+          minX = Math.min(minX, corner.x);
+          maxX = Math.max(maxX, corner.x);
+          minY = Math.min(minY, corner.y);
+          maxY = Math.max(maxY, corner.y);
+          minZ = Math.min(minZ, corner.z);
+          maxZ = Math.max(maxZ, corner.z);
+        }
+      }
+    }
+  }
+
+  // Center the rotated shape around origin
+  return new THREE.Vector3(
+    -(minX + maxX) / 2,
+    -(minY + maxY) / 2,
+    -(minZ + maxZ) / 2
+  );
+}
+
+/**
  * Gets the bounding box dimensions of a shape
  */
 export function getShapeDimensions(shapeType: ShapeType): { width: number; height: number; depth: number } {
